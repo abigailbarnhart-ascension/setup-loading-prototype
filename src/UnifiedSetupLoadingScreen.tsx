@@ -164,26 +164,26 @@ function deriveSubsteps(pct: number, syncDone: boolean) {
 const initialSteps = (): Step[] => [
   {
     id: "provision",
-    label: "Setting up your profile",
-    description: "Getting your account ready for records",
+    label: "Creating your profile",
+    description: "Preparing your account for your records",
     status: "active",
   },
   {
     id: "check",
     label: "Checking for records",
-    description: "Looking for records to connect",
+    description: "Looking for existing records to connect",
     status: "idle",
   },
   {
     id: "connect",
-    label: "Connect to Ascension records",
-    description: "Link your health system",
+    label: "Connect to Ascension health records",
+    description: "Connecting to your health system",
     status: "idle",
   },
   {
     id: "sync",
     label: "Connecting your records",
-    description: "Getting your records ready (up to 90 seconds)",
+    description: "Getting your records ready",
     status: "idle",
     substeps: [
       { id: "access", label: "Finding your records", status: "idle" },
@@ -969,7 +969,7 @@ function StepRow(props: StepRowProps) {
   return (
     <motion.div
       layout="position"
-      className={`rounded-3xl border p-4 md:p-5 transition-colors duration-400 ${
+      className={`relative rounded-3xl overflow-hidden border p-4 md:p-5 transition-colors duration-400 ${
         isActive
           ? "border-slate-300 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)]"
           : isDone
@@ -981,8 +981,8 @@ function StepRow(props: StepRowProps) {
           : "border-slate-200/60 bg-white"
       }`}
     >
-      <div className="flex items-start gap-4">
-        <div className="mt-0.5">
+  <div className={`flex items-start gap-4 ${showProvisionError || showCheckError ? "pb-36 md:pb-32" : ""}`}>
+        <div className="mt-1">
           <StatusGlyph status={step.status} />
         </div>
 
@@ -996,51 +996,11 @@ function StepRow(props: StepRowProps) {
             ) : null}
           </div>
 
-          {/* Step 1 error */}
-          {showProvisionError ? (
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm text-slate-700">We couldn’t set up your profile. Try again.</p>
-              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button onClick={onRetryProvision} disabled={isRetrying} className="rounded-xl">
-                  {isRetrying ? "Retrying..." : "Try again"}
-                </Button>
-                {provisionAttempts >= 2 ? (
-                  <button type="button" onClick={onSkipProvision} className="text-sm underline text-slate-700">
-                    Skip and go to Home
-                  </button>
-                ) : null}
-              </div>
-              <p className="mt-2 text-xs text-slate-600">If you skip, you’ll go to Home. We’ll try again there.</p>
-              {provisionAttempts < 2 ? (
-                <p className="mt-1 text-xs text-slate-600">If it fails again, you’ll be able to skip.</p>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* Step 2 error */}
-          {showCheckError ? (
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm text-slate-700">We couldn’t check for records. Try again.</p>
-              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button onClick={onRetryCheck} disabled={isRetrying} className="rounded-xl">
-                  {isRetrying ? "Retrying..." : "Try again"}
-                </Button>
-                {checkAttempts >= 2 ? (
-                  <button type="button" onClick={onSkipCheck} className="text-sm underline text-slate-700">
-                    Skip and go to Home
-                  </button>
-                ) : null}
-              </div>
-              <p className="mt-2 text-xs text-slate-600">If you skip, you’ll go to Home. We’ll try again there.</p>
-              {checkAttempts < 2 ? (
-                <p className="mt-1 text-xs text-slate-600">If it fails again, you’ll be able to skip.</p>
-              ) : null}
-            </div>
-          ) : null}
+          {/* NOTE: error UI moved to full-width overlay below (so it can span under the left glyph). */}
 
           {/* SYNC: keep progress + substeps mounted; error overlays them */}
           {showSyncBody ? (
-            <div className="mt-2 relative">
+            <div className="mt-2 relative -mx-4 md:-mx-5 -mb-4 md:-mb-5">
               <motion.div
                 initial={false}
                 animate={{ opacity: isError ? 0 : 1 }}
@@ -1072,28 +1032,46 @@ function StepRow(props: StepRowProps) {
               <AnimatePresence>
                 {showSyncOverlayError ? (
                   <motion.div
-                    key="syncerr"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.22 }}
-                    className="absolute inset-0 rounded-2xl border border-amber-200 bg-amber-50 p-4"
-                  >
-                    <p className="text-sm text-slate-700">We couldn’t connect your records. Try again.</p>
-                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <Button onClick={onConnect} disabled={connectBusy || isRetrying} className="rounded-xl">
-                        {isRetrying ? "Retrying..." : "Try again"}
-                      </Button>
-                      <button
-                        type="button"
-                        onClick={onSkipLinking}
-                        className={`text-sm underline text-slate-700 ${isRetrying ? "pointer-events-none opacity-60" : ""}`}
-                      >
-                        Skip for now
-                      </button>
-                    </div>
-                    <p className="mt-2 text-xs text-slate-600">We’ll try again next time you log in.</p>
-                  </motion.div>
+  key="syncerr"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  transition={{ duration: 0.22 }}
+  className="absolute top-0 bottom-0 -left-[44px] right-0 bg-[#FFF7E6] p-0"
+>
+<div className="px-6 pt-5">
+  <div className="pl-[44px]">
+      <p className="text-sm font-semibold text-slate-900">Something went wrong</p>
+      <p className="mt-1 text-sm text-slate-700">
+        We had a problem connecting your records. Let’s try this again.
+      </p>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onConnect}
+          disabled={connectBusy || isRetrying}
+          className="rounded-xl border-[#B74900] text-[#B74900] hover:bg-[#B74900]/10"
+        >
+          {isRetrying ? "Retrying..." : "TRY AGAIN"}
+        </Button>
+
+        <button
+          type="button"
+          onClick={onSkipLinking}
+          className={`text-sm underline text-[#B74900] ${isRetrying ? "pointer-events-none opacity-60" : ""}`}
+        >
+          Skip for now
+        </button>
+      </div>
+
+      <p className="mt-3 text-xs text-slate-600">
+        If you skip, you can still go to Home. We’ll try again next time you log in.
+      </p>
+    </div>
+  </div>
+</motion.div>
                 ) : null}
               </AnimatePresence>
             </div>
@@ -1126,6 +1104,90 @@ function StepRow(props: StepRowProps) {
           ) : null}
         </div>
       </div>
+{/* Full-width lower-half error overlay (spans under the left icon) */}
+{(showProvisionError || showCheckError) ? (
+  <div className="absolute left-0 right-0 bottom-0 bg-[#FFF7E6] pb-5">
+    <div className="h-4 bg-white" />
+<div className="border-t border-[rgba(0,0,0,0.08)]" />
+   <div className="px-6 pt-5">
+  <div className="pl-[44px]">
+      {showProvisionError ? (
+        provisionAttempts >= 2 ? (
+          <>
+            <p className="text-sm font-semibold text-slate-900">
+              We’re having trouble setting up your profile
+            </p>
+            <p className="mt-1 text-sm text-slate-700">
+              You can continue to Home. Your records may not appear yet. We’ll keep trying in the background.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onSkipProvision}
+              className="mt-3 rounded-xl border-[#B74900] text-[#B74900] hover:bg-[#B74900]/10"
+            >
+              CONTINUE TO HOME
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-semibold text-slate-900">Something went wrong</p>
+            <p className="mt-1 text-sm text-slate-700">
+              We had a problem creating your profile. Let’s try this again.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onRetryProvision}
+              disabled={isRetrying}
+              className="mt-3 rounded-xl border-[#B74900] text-[#B74900] hover:bg-[#B74900]/10"
+            >
+              {isRetrying ? "Retrying..." : "TRY AGAIN"}
+            </Button>
+          </>
+        )
+      ) : null}
+
+      {showCheckError ? (
+        checkAttempts >= 2 ? (
+          <>
+            <p className="text-sm font-semibold text-slate-900">
+              We’re having trouble checking for records
+            </p>
+            <p className="mt-1 text-sm text-slate-700">
+              You can continue to Home. Your records may not appear yet. We’ll keep trying in the background.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onSkipCheck}
+              className="mt-3 rounded-xl border-[#B74900] text-[#B74900] hover:bg-[#B74900]/10"
+            >
+              CONTINUE TO HOME
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-semibold text-slate-900">Something went wrong</p>
+            <p className="mt-1 text-sm text-slate-700">
+              We had a problem checking for records. Let’s try this again.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onRetryCheck}
+              disabled={isRetrying}
+              className="mt-3 rounded-xl border-[#B74900] text-[#B74900] hover:bg-[#B74900]/10"
+            >
+              {isRetrying ? "Retrying..." : "TRY AGAIN"}
+            </Button>
+          </>
+        )
+      ) : null}
+      </div>
+    </div>
+  </div>
+) : null}
     </motion.div>
   );
 }
